@@ -31,9 +31,10 @@ jobs:
           };
           CONFIG
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/dashboard
       - id: deployment
         uses: actions/deploy-pages@v4
-
