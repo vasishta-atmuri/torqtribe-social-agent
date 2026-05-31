@@ -8,7 +8,7 @@ Codex creates the creative package. This project imports it, syncs it to Supabas
 
 1. Ask Codex to create a TikTok carousel package in `inbox/<slug>/`.
 2. Run `npm run scan` to validate local packages.
-3. Run `npm run sync` to upload package metadata and media to the social Supabase project.
+3. Run `npm run sync` to upload package metadata and media to Supabase.
 4. Open the hosted dashboard, review the post, and approve it.
 5. Click "Send to TikTok" in the dashboard.
 6. Finish the post inside TikTok after TikTok receives the media-upload inbox item.
@@ -31,6 +31,8 @@ SOCIAL_OWNER_USER_ID=
 ```
 
 The service role key stays only on your Mac. It is used by the local worker to upload media and create rows.
+
+For the pilot, this project uses the existing TorqTribe Supabase project with isolated `social_*` tables and Edge Functions. A separate Supabase project can be restored later if the workflow gets traction.
 
 ## Dashboard
 
@@ -61,3 +63,8 @@ TIKTOK_REDIRECT_URI=
 SOCIAL_DASHBOARD_URL=
 ```
 
+The current TikTok callback URL for the existing Supabase project is:
+
+```text
+https://bbfepbuoydwwsisaiiny.supabase.co/functions/v1/social-tiktok-auth-callback
+```

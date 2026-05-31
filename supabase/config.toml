@@ -7,9 +7,9 @@ extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-major_version = 17
+major_version = 15
 
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:4177"
-additional_redirect_urls = ["https://vasishta88.github.io"]
+additional_redirect_urls = ["https://vasishta-atmuri.github.io"]

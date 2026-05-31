@@ -13,7 +13,7 @@ Fill in:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SOCIAL_OWNER_USER_ID`
 
-`SOCIAL_OWNER_USER_ID` is your Supabase Auth user id for the social project.
+`SOCIAL_OWNER_USER_ID` is your Supabase Auth user id in the existing TorqTribe Supabase project.
 
 ## 2. Configure dashboard variables in GitHub
 
@@ -36,6 +36,9 @@ supabase secrets set SOCIAL_DASHBOARD_URL=...
 Set TikTok's redirect URI to:
 
 ```text
-https://<project-ref>.supabase.co/functions/v1/social-tiktok-auth-callback
+https://bbfepbuoydwwsisaiiny.supabase.co/functions/v1/social-tiktok-auth-callback
 ```
 
+## Supabase Project Choice
+
+For the pilot, this project uses the existing TorqTribe Supabase project to avoid an extra monthly project cost. The social tables are isolated with `social_*` names and RLS.
