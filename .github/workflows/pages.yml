@@ -1,0 +1,39 @@
+name: Deploy Dashboard
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write dashboard config
+        run: |
+          cat > apps/dashboard/config.js <<'CONFIG'
+          window.SOCIAL_AGENT_CONFIG = {
+            supabaseUrl: "${{ vars.SUPABASE_URL }}",
+            supabaseAnonKey: "${{ vars.SUPABASE_ANON_KEY }}"
+          };
+          CONFIG
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/dashboard
+      - id: deployment
+        uses: actions/deploy-pages@v4
+

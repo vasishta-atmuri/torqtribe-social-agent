@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TorqTribe Social Agent</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>TorqTribe Social Agent</h1>
+      <p>Review Codex-created TikTok carousels and send approved posts to TikTok.</p>
+    </div>
+    <button id="connectTikTok" class="ghost">Connect TikTok</button>
+  </header>
+
+  <main>
+    <section id="authPanel" class="panel">
+      <h2>Sign In</h2>
+      <p>Use the email tied to your social Supabase project.</p>
+      <form id="loginForm">
+        <input id="email" type="email" placeholder="you@example.com" required>
+        <button type="submit">Send Magic Link</button>
+      </form>
+    </section>
+
+    <section id="appPanel" class="hidden">
+      <div class="toolbar">
+        <div>
+          <h2>Posts</h2>
+          <p id="accountStatus">Checking TikTok connection...</p>
+        </div>
+        <button id="refresh">Refresh</button>
+      </div>
+      <div class="columns">
+        <div class="panel"><h3>Needs Review</h3><div id="needsReview"></div></div>
+        <div class="panel"><h3>Ready</h3><div id="approved"></div></div>
+        <div class="panel"><h3>Sent / Failed</h3><div id="done"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <template id="postTemplate">
+    <article class="post-card">
+      <div class="meta"></div>
+      <h4></h4>
+      <p class="caption"></p>
+      <div class="media-strip"></div>
+      <div class="actions"></div>
+    </article>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+

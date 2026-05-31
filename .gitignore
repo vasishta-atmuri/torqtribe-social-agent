@@ -1,0 +1,13 @@
+.DS_Store
+.env.local
+node_modules/
+dist/
+coverage/
+inbox/*
+!inbox/.gitkeep
+archive/*
+!archive/.gitkeep
+tmp/
+apps/dashboard/config.js
+supabase/.temp/
+

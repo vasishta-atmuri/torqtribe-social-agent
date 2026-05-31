@@ -1,0 +1,15 @@
+{
+  "type": "owned_post",
+  "platform": "tiktok",
+  "format": "photo_carousel",
+  "title": "Stop letting one missed workout erase your week",
+  "caption": "One missed workout is not the problem. Letting it erase your whole week is. Build a plan you can restart fast. Be consistent. Be fit.",
+  "hashtags": ["#fitness", "#beginnerfitness", "#workoutplan", "#consistency"],
+  "coverIndex": 0,
+  "media": [
+    "media/slide-01.png",
+    "media/slide-02.png"
+  ],
+  "status": "needs_review"
+}
+

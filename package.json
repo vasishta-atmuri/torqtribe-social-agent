@@ -1,0 +1,19 @@
+{
+  "name": "torqtribe-social-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TikTok-first publishing operator for Codex-generated TorqTribe social content.",
+  "scripts": {
+    "worker": "node --experimental-strip-types apps/worker/src/cli.ts",
+    "scan": "node --experimental-strip-types apps/worker/src/cli.ts scan",
+    "sync": "node --experimental-strip-types apps/worker/src/cli.ts sync",
+    "publish:tiktok": "node --experimental-strip-types apps/worker/src/cli.ts publish-tiktok",
+    "check": "node --experimental-strip-types --check apps/worker/src/cli.ts",
+    "serve:dashboard": "python3 -m http.server 4177 -d apps/dashboard"
+  },
+  "engines": {
+    "node": ">=25"
+  }
+}
+
