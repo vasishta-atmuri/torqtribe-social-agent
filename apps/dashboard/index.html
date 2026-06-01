@@ -21,8 +21,11 @@
       <form id="loginForm">
         <input id="email" type="email" placeholder="you@example.com" required>
         <input id="password" type="password" placeholder="Password, optional for magic link">
-        <button type="submit" data-action="magic">Send Magic Link</button>
-        <button type="submit" data-action="password">Sign In With Password</button>
+        <div class="auth-actions">
+          <button id="magicLinkButton" type="button">Send Magic Link</button>
+          <button id="passwordSignInButton" type="button">Sign In With Password</button>
+        </div>
+        <p id="authStatus" class="status" role="status" aria-live="polite"></p>
       </form>
     </section>
 
@@ -31,6 +34,8 @@
         <div>
           <h2>Posts</h2>
           <p>Approve a kit, copy the caption, download/open the slides, then mark the post when you upload it manually.</p>
+          <p id="sessionInfo" class="session-info"></p>
+          <p id="appStatus" class="status" role="status" aria-live="polite"></p>
         </div>
         <div class="toolbar-actions">
           <button id="refresh">Refresh</button>

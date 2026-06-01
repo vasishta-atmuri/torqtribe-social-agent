@@ -80,6 +80,11 @@ button:hover { background: rgba(233, 162, 59, 0.23); }
 
 button.ghost { background: transparent; }
 
+button:disabled, input:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 input {
   min-width: min(420px, 100%);
   border: 1px solid var(--line);
@@ -92,6 +97,40 @@ form {
   display: grid;
   gap: 10px;
   max-width: 460px;
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--muted);
+  margin: 8px 0 0;
+  padding: 10px 12px;
+}
+
+.status:empty { display: none; }
+
+.status.error {
+  border-color: rgba(239, 107, 87, 0.62);
+  color: #ffc0b7;
+}
+
+.status.success {
+  border-color: rgba(110, 194, 123, 0.54);
+  color: #c9f0ce;
+}
+
+.session-info {
+  color: var(--ember);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
 
 .post-card {

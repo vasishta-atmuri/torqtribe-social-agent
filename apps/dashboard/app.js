@@ -3,44 +3,85 @@ const supabase = window.supabase.createClient(config.supabaseUrl, config.supabas
 const authPanel = document.querySelector("#authPanel");
 const appPanel = document.querySelector("#appPanel");
 const loginForm = document.querySelector("#loginForm");
+const magicLinkButton = document.querySelector("#magicLinkButton");
+const passwordSignInButton = document.querySelector("#passwordSignInButton");
+const authStatus = document.querySelector("#authStatus");
+const appStatus = document.querySelector("#appStatus");
+const sessionInfo = document.querySelector("#sessionInfo");
 const refreshButton = document.querySelector("#refresh");
 const signOutButton = document.querySelector("#signOut");
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const email = document.querySelector("#email").value;
-  const password = document.querySelector("#password").value;
-  const action = event.submitter?.dataset?.action || "magic";
-  if (action === "password") {
-    if (!password) {
-      alert("Enter a password, or use Send Magic Link instead.");
-      return;
-    }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) alert(error.message);
-    await load();
-    return;
-  }
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.href.split("?")[0] }
-  });
-  alert(error ? error.message : "Magic link sent. Open it, then return here.");
+  if (getPassword()) await signInWithPassword();
+  else await sendMagicLink();
 });
 
+magicLinkButton.addEventListener("click", sendMagicLink);
+passwordSignInButton.addEventListener("click", signInWithPassword);
 refreshButton.addEventListener("click", load);
 signOutButton.addEventListener("click", async () => {
   await supabase.auth.signOut();
+  setAuthStatus("Signed out.", "success");
   await load();
 });
 
 supabase.auth.onAuthStateChange(() => load());
 load();
 
+async function sendMagicLink() {
+  const email = getEmail();
+  if (!email) {
+    setAuthStatus("Enter your email first.", "error");
+    return;
+  }
+  setAuthBusy(true);
+  setAuthStatus("Sending magic link...", "");
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.href.split("?")[0] }
+  });
+  setAuthBusy(false);
+  if (error) {
+    setAuthStatus(error.message, "error");
+    return;
+  }
+  setAuthStatus("Magic link sent. Open it from the same device/browser, then return here.", "success");
+}
+
+async function signInWithPassword() {
+  const email = getEmail();
+  const password = getPassword();
+  if (!email) {
+    setAuthStatus("Enter your email first.", "error");
+    return;
+  }
+  if (!password) {
+    setAuthStatus("Enter your password, then click Sign In With Password.", "error");
+    return;
+  }
+  setAuthBusy(true);
+  setAuthStatus("Signing in...", "");
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  setAuthBusy(false);
+  if (error) {
+    setAuthStatus(error.message, "error");
+    return;
+  }
+  setAuthStatus(`Signed in as ${data.user.email}. Loading posts...`, "success");
+  await load();
+}
+
 async function load() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) {
+    setAuthStatus(sessionError.message, "error");
+    return;
+  }
   authPanel.classList.toggle("hidden", Boolean(session));
   appPanel.classList.toggle("hidden", !session);
+  sessionInfo.textContent = session ? `Signed in as ${session.user.email}` : "";
+  setAppStatus("", "");
   if (!session) return;
 
   const { data: posts, error } = await supabase
@@ -48,13 +89,15 @@ async function load() {
     .select("*, social_media_assets(*)")
     .order("created_at", { ascending: false });
   if (error) {
-    alert(error.message);
+    setAppStatus(`Could not load posts: ${error.message}`, "error");
     return;
   }
 
-  renderColumn("needsReview", posts.filter((post) => post.status === "needs_review"));
-  renderColumn("approved", posts.filter((post) => ["approved", "ready_to_post"].includes(post.status)));
-  renderColumn("done", posts.filter((post) => ["scheduled_manually", "published_manually", "rejected"].includes(post.status)));
+  const rows = posts || [];
+  renderColumn("needsReview", rows.filter((post) => post.status === "needs_review"));
+  renderColumn("approved", rows.filter((post) => ["approved", "ready_to_post"].includes(post.status)));
+  renderColumn("done", rows.filter((post) => ["scheduled_manually", "published_manually", "rejected"].includes(post.status)));
+  setAppStatus(rows.length ? `Loaded ${rows.length} post kit${rows.length === 1 ? "" : "s"}.` : "Signed in. No post kits have been synced for this user yet.", rows.length ? "success" : "");
 }
 
 function renderColumn(id, posts) {
@@ -132,7 +175,10 @@ function button(label, onClick) {
 
 async function setStatus(id, status) {
   const { error } = await supabase.from("social_posts").update({ status }).eq("id", id);
-  if (error) alert(error.message);
+  if (error) {
+    setAppStatus(error.message, "error");
+    return;
+  }
   await load();
 }
 
@@ -154,6 +200,37 @@ function showManualForm(template, id) {
 async function markPosted(id, remoteUrl) {
   const payload = { status: "published_manually", remote_url: remoteUrl || null };
   const { error } = await supabase.from("social_posts").update(payload).eq("id", id);
-  if (error) alert(error.message);
+  if (error) {
+    setAppStatus(error.message, "error");
+    return;
+  }
   await load();
+}
+
+function getEmail() {
+  return document.querySelector("#email").value.trim();
+}
+
+function getPassword() {
+  return document.querySelector("#password").value;
+}
+
+function setAuthBusy(isBusy) {
+  loginForm.querySelectorAll("input, button").forEach((element) => {
+    element.disabled = isBusy;
+  });
+}
+
+function setAuthStatus(message, type) {
+  setStatusText(authStatus, message, type);
+}
+
+function setAppStatus(message, type) {
+  setStatusText(appStatus, message, type);
+}
+
+function setStatusText(element, message, type) {
+  element.textContent = message;
+  element.classList.remove("error", "success");
+  if (type) element.classList.add(type);
 }
