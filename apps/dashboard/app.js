@@ -1,3 +1,4 @@
+(async () => {
 const config = window.SOCIAL_AGENT_CONFIG || {};
 const authPanel = document.querySelector("#authPanel");
 const appPanel = document.querySelector("#appPanel");
@@ -9,7 +10,7 @@ const appStatus = document.querySelector("#appStatus");
 const sessionInfo = document.querySelector("#sessionInfo");
 const refreshButton = document.querySelector("#refresh");
 const signOutButton = document.querySelector("#signOut");
-let supabase;
+let supabaseClient;
 
 boot();
 
@@ -23,7 +24,7 @@ async function boot() {
     return;
   }
 
-  supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+  supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
   setAuthStatus("Dashboard script loaded. Ready to sign in.", "success");
 
   loginForm.addEventListener("submit", async (event) => {
@@ -36,12 +37,12 @@ async function boot() {
   passwordSignInButton.addEventListener("click", signInWithPassword);
   refreshButton.addEventListener("click", load);
   signOutButton.addEventListener("click", async () => {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     setAuthStatus("Signed out.", "success");
     await load();
   });
 
-  supabase.auth.onAuthStateChange(() => load());
+  supabaseClient.auth.onAuthStateChange(() => load());
   await load();
 }
 
@@ -53,7 +54,7 @@ async function sendMagicLink() {
   }
   setAuthBusy(true);
   setAuthStatus("Sending magic link...", "");
-  const { error } = await supabase.auth.signInWithOtp({
+  const { error } = await supabaseClient.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: window.location.href.split("?")[0] }
   });
@@ -78,7 +79,7 @@ async function signInWithPassword() {
   }
   setAuthBusy(true);
   setAuthStatus("Signing in...", "");
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
   setAuthBusy(false);
   if (error) {
     setAuthStatus(error.message, "error");
@@ -89,7 +90,7 @@ async function signInWithPassword() {
 }
 
 async function load() {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
   if (sessionError) {
     setAuthStatus(sessionError.message, "error");
     return;
@@ -100,7 +101,7 @@ async function load() {
   setAppStatus("", "");
   if (!session) return;
 
-  const { data: posts, error } = await supabase
+  const { data: posts, error } = await supabaseClient
     .from("social_posts")
     .select("*, social_media_assets(*)")
     .order("created_at", { ascending: false });
@@ -190,7 +191,7 @@ function button(label, onClick) {
 }
 
 async function setStatus(id, status) {
-  const { error } = await supabase.from("social_posts").update({ status }).eq("id", id);
+  const { error } = await supabaseClient.from("social_posts").update({ status }).eq("id", id);
   if (error) {
     setAppStatus(error.message, "error");
     return;
@@ -215,7 +216,7 @@ function showManualForm(template, id) {
 
 async function markPosted(id, remoteUrl) {
   const payload = { status: "published_manually", remote_url: remoteUrl || null };
-  const { error } = await supabase.from("social_posts").update(payload).eq("id", id);
+  const { error } = await supabaseClient.from("social_posts").update(payload).eq("id", id);
   if (error) {
     setAppStatus(error.message, "error");
     return;
@@ -250,3 +251,4 @@ function setStatusText(element, message, type) {
   element.classList.remove("error", "success");
   if (type) element.classList.add(type);
 }
+})();
