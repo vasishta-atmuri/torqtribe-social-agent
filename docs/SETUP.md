@@ -22,22 +22,9 @@ Repository variables:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 
-## 3. Configure Supabase Edge Function secrets
+## 3. Manual TikTok publishing
 
-```bash
-supabase secrets set TIKTOK_CLIENT_KEY=...
-supabase secrets set TIKTOK_CLIENT_SECRET=...
-supabase secrets set TIKTOK_REDIRECT_URI=...
-supabase secrets set SOCIAL_DASHBOARD_URL=...
-```
-
-## 4. TikTok redirect URI
-
-Set TikTok's redirect URI to:
-
-```text
-https://bbfepbuoydwwsisaiiny.supabase.co/functions/v1/social-tiktok-auth-callback
-```
+TikTok API publishing is disabled in V1 because it requires a TikTok developer app. Use the dashboard to approve a kit, copy the caption, open/download slides, and mark the post as scheduled or published after uploading it in TikTok.
 
 ## Supabase Project Choice
 

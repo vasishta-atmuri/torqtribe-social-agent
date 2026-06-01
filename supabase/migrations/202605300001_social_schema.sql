@@ -11,7 +11,7 @@ create table if not exists public.social_posts (
   hashtags text[] not null default '{}',
   cover_index integer not null default 0,
   media_count integer not null default 0,
-  status text not null default 'needs_review' check (status in ('needs_review', 'approved', 'publishing', 'uploaded', 'failed', 'rejected')),
+  status text not null default 'needs_review' check (status in ('needs_review', 'approved', 'ready_to_post', 'scheduled_manually', 'published_manually', 'rejected')),
   remote_publish_id text,
   remote_url text,
   last_error text,
@@ -110,6 +110,10 @@ to authenticated
 using (owner_id = auth.uid())
 with check (owner_id = auth.uid());
 
+alter table public.social_posts drop constraint if exists social_posts_status_check;
+alter table public.social_posts add constraint social_posts_status_check
+check (status in ('needs_review', 'approved', 'ready_to_post', 'scheduled_manually', 'published_manually', 'rejected'));
+
 drop policy if exists "Users can read own social media assets" on public.social_media_assets;
 create policy "Users can read own social media assets"
 on public.social_media_assets for select
@@ -140,4 +144,3 @@ create policy "Public can read TikTok carousel media"
 on storage.objects for select
 to public
 using (bucket_id = 'tiktok-carousel-media');
-

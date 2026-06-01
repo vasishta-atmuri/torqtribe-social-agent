@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, extname, join, resolve } from "node:path";
 
-type Command = "init" | "scan" | "sync" | "publish-tiktok" | "help";
+type Command = "init" | "scan" | "sync" | "help";
 
 interface Env {
   SUPABASE_URL?: string;
@@ -51,9 +51,6 @@ try {
     case "sync":
       await syncPackages();
       break;
-    case "publish-tiktok":
-      await publishTikTok(String(args.id || ""));
-      break;
     default:
       printHelp();
   }
@@ -86,7 +83,6 @@ Commands:
   init
   scan
   sync
-  publish-tiktok --id <post_id>
 `);
 }
 
@@ -180,7 +176,7 @@ async function syncPackages(): Promise<void> {
       hashtags: post.hashtags || [],
       cover_index: post.coverIndex || 0,
       media_count: post.media.length,
-      status: "needs_review"
+      status: post.status || "needs_review"
     });
     for (let index = 0; index < scan.mediaPaths.length; index += 1) {
       const mediaPath = scan.mediaPaths[index];
@@ -268,23 +264,5 @@ function supabaseClient(env: Required<Pick<Env, "SUPABASE_URL" | "SUPABASE_SERVI
       if (!response.ok) throw new Error(`Asset sync failed: ${response.status} ${await response.text()}`);
     }
   };
-}
-
-async function publishTikTok(postId: string): Promise<void> {
-  if (!postId) throw new Error("Missing --id <post_id>");
-  const env = requireEnv();
-  const baseUrl = env.SUPABASE_URL.replace(/\/$/, "");
-  const response = await fetch(`${baseUrl}/functions/v1/social-tiktok-publish`, {
-    method: "POST",
-    headers: {
-      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ post_id: postId })
-  });
-  const text = await response.text();
-  if (!response.ok) throw new Error(`TikTok publish failed: ${response.status} ${text}`);
-  console.log(text);
 }
 

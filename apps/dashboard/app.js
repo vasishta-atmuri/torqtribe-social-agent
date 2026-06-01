@@ -4,8 +4,6 @@ const authPanel = document.querySelector("#authPanel");
 const appPanel = document.querySelector("#appPanel");
 const loginForm = document.querySelector("#loginForm");
 const refreshButton = document.querySelector("#refresh");
-const connectTikTokButton = document.querySelector("#connectTikTok");
-const accountStatus = document.querySelector("#accountStatus");
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -18,7 +16,6 @@ loginForm.addEventListener("submit", async (event) => {
 });
 
 refreshButton.addEventListener("click", load);
-connectTikTokButton.addEventListener("click", connectTikTok);
 
 supabase.auth.onAuthStateChange(() => load());
 load();
@@ -27,27 +24,20 @@ async function load() {
   const { data: { session } } = await supabase.auth.getSession();
   authPanel.classList.toggle("hidden", Boolean(session));
   appPanel.classList.toggle("hidden", !session);
-  connectTikTokButton.classList.toggle("hidden", !session);
   if (!session) return;
 
-  const [{ data: posts, error }, { data: status }] = await Promise.all([
-    supabase
-      .from("social_posts")
-      .select("*, social_media_assets(*)")
-      .order("created_at", { ascending: false }),
-    supabase.functions.invoke("social-account-status", { body: { platform: "tiktok" } })
-  ]);
+  const { data: posts, error } = await supabase
+    .from("social_posts")
+    .select("*, social_media_assets(*)")
+    .order("created_at", { ascending: false });
   if (error) {
     alert(error.message);
     return;
   }
-  accountStatus.textContent = status?.connected
-    ? `TikTok connected${status.display_name ? ` as ${status.display_name}` : ""}.`
-    : "TikTok not connected yet.";
 
   renderColumn("needsReview", posts.filter((post) => post.status === "needs_review"));
-  renderColumn("approved", posts.filter((post) => post.status === "approved" || post.status === "publishing"));
-  renderColumn("done", posts.filter((post) => ["uploaded", "failed", "rejected"].includes(post.status)));
+  renderColumn("approved", posts.filter((post) => ["approved", "ready_to_post"].includes(post.status)));
+  renderColumn("done", posts.filter((post) => ["scheduled_manually", "published_manually", "rejected"].includes(post.status)));
 }
 
 function renderColumn(id, posts) {
@@ -74,14 +64,43 @@ function renderPost(post) {
     image.alt = asset.original_filename || "Carousel slide";
     mediaStrip.append(image);
   }
+  const slideList = document.createElement("div");
+  slideList.className = "slide-list";
+  for (const asset of assets) {
+    const link = document.createElement("a");
+    link.href = asset.public_url;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.download = asset.original_filename || "";
+    link.textContent = `Slide ${asset.sort_order + 1}: ${asset.original_filename || "open image"}`;
+    slideList.append(link);
+  }
+  mediaStrip.after(slideList);
 
   const actions = template.querySelector(".actions");
   if (post.status === "needs_review") {
-    actions.append(button("Approve", () => setStatus(post.id, "approved")));
+    actions.append(button("Approve Kit", () => setStatus(post.id, "ready_to_post")));
     actions.append(button("Reject", () => setStatus(post.id, "rejected")));
   }
-  if (post.status === "approved") {
-    actions.append(button("Send to TikTok", () => publishTikTok(post.id)));
+  if (["approved", "ready_to_post"].includes(post.status)) {
+    actions.append(button("Copy Caption", () => copyCaption(post.caption)));
+    actions.append(button("Open Slides", () => openSlides(assets)));
+    actions.append(button("Mark Scheduled", () => setStatus(post.id, "scheduled_manually")));
+    actions.append(button("Mark Posted", () => showManualForm(template, post.id)));
+  }
+  const form = template.querySelector(".manual-form");
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const url = form.querySelector(".manual-url").value.trim();
+    await markPosted(post.id, url);
+  });
+  if (post.remote_url) {
+    const link = document.createElement("a");
+    link.href = post.remote_url;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.textContent = "Open TikTok post";
+    actions.append(link);
   }
   return template;
 }
@@ -100,27 +119,24 @@ async function setStatus(id, status) {
   await load();
 }
 
-async function connectTikTok() {
-  const { data, error } = await supabase.functions.invoke("social-tiktok-auth-start", {
-    body: { redirect_to: window.location.href.split("?")[0] }
-  });
-  if (error) {
-    alert(error.message);
-    return;
-  }
-  window.location.href = data.url;
+async function copyCaption(caption) {
+  await navigator.clipboard.writeText(caption);
+  alert("Caption copied. Open TikTok, create a photo post, add these slides, then paste the caption.");
 }
 
-async function publishTikTok(id) {
-  const { data, error } = await supabase.functions.invoke("social-tiktok-publish", {
-    body: { post_id: id }
-  });
-  if (error) {
-    alert(error.message);
-    await load();
-    return;
-  }
-  alert(`Sent to TikTok. Publish ID: ${data.publish_id || "unknown"}`);
+function openSlides(assets) {
+  for (const asset of assets) window.open(asset.public_url, "_blank", "noreferrer");
+}
+
+function showManualForm(template, id) {
+  const form = template.querySelector(".manual-form");
+  form.classList.remove("hidden");
+  form.querySelector(".manual-url").focus();
+}
+
+async function markPosted(id, remoteUrl) {
+  const payload = { status: "published_manually", remote_url: remoteUrl || null };
+  const { error } = await supabase.from("social_posts").update(payload).eq("id", id);
+  if (error) alert(error.message);
   await load();
 }
-

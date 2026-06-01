@@ -10,9 +10,8 @@
   <header class="topbar">
     <div>
       <h1>TorqTribe Social Agent</h1>
-      <p>Review Codex-created TikTok carousels and send approved posts to TikTok.</p>
+      <p>Review Codex-created TikTok carousel kits, then post them manually from TikTok.</p>
     </div>
-    <button id="connectTikTok" class="ghost">Connect TikTok</button>
   </header>
 
   <main>
@@ -29,14 +28,14 @@
       <div class="toolbar">
         <div>
           <h2>Posts</h2>
-          <p id="accountStatus">Checking TikTok connection...</p>
+          <p>Approve a kit, copy the caption, download/open the slides, then mark the post when you upload it manually.</p>
         </div>
         <button id="refresh">Refresh</button>
       </div>
       <div class="columns">
         <div class="panel"><h3>Needs Review</h3><div id="needsReview"></div></div>
-        <div class="panel"><h3>Ready</h3><div id="approved"></div></div>
-        <div class="panel"><h3>Sent / Failed</h3><div id="done"></div></div>
+        <div class="panel"><h3>Ready To Post</h3><div id="approved"></div></div>
+        <div class="panel"><h3>Scheduled / Posted</h3><div id="done"></div></div>
       </div>
     </section>
   </main>
@@ -48,6 +47,10 @@
       <p class="caption"></p>
       <div class="media-strip"></div>
       <div class="actions"></div>
+      <form class="manual-form hidden">
+        <input class="manual-url" type="url" placeholder="Paste TikTok URL after posting">
+        <button type="submit">Save URL</button>
+      </form>
     </article>
   </template>
 
@@ -56,4 +59,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-

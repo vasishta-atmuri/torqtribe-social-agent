@@ -116,14 +116,26 @@ input {
   border: 1px solid var(--line);
 }
 
-.actions {
+.actions, .manual-form {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.manual-form { margin-top: 10px; }
+
+.slide-list {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+}
+
+.slide-list a {
+  color: var(--ember);
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 980px) {
   .topbar, .toolbar { align-items: flex-start; flex-direction: column; }
   .columns { grid-template-columns: 1fr; }
 }
-

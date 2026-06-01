@@ -2,7 +2,7 @@
 
 TikTok-first publishing operator for Codex-generated TorqTribe social posts.
 
-Codex creates the creative package. This project imports it, syncs it to Supabase, lets you approve it from a dashboard, and sends approved TikTok photo carousels to TikTok using `MEDIA_UPLOAD`.
+Codex creates the creative package. This project imports it, syncs it to Supabase, lets you approve it from a dashboard, and gives you a manual publishing kit for TikTok photo carousels.
 
 ## Workflow
 
@@ -10,8 +10,9 @@ Codex creates the creative package. This project imports it, syncs it to Supabas
 2. Run `npm run scan` to validate local packages.
 3. Run `npm run sync` to upload package metadata and media to Supabase.
 4. Open the hosted dashboard, review the post, and approve it.
-5. Click "Send to TikTok" in the dashboard.
-6. Finish the post inside TikTok after TikTok receives the media-upload inbox item.
+5. Copy the caption and open/download the carousel slides.
+6. Post the photo carousel manually in TikTok.
+7. Mark the post as scheduled or published in the dashboard.
 
 ## Local Setup
 
@@ -52,19 +53,4 @@ Then open `http://127.0.0.1:4177`.
 
 ## TikTok
 
-V1 uses TikTok `MEDIA_UPLOAD`, not Direct Post. The dashboard sends the carousel to TikTok, then you complete the final publish step in TikTok.
-
-TikTok Edge Function secrets:
-
-```text
-TIKTOK_CLIENT_KEY=
-TIKTOK_CLIENT_SECRET=
-TIKTOK_REDIRECT_URI=
-SOCIAL_DASHBOARD_URL=
-```
-
-The current TikTok callback URL for the existing Supabase project is:
-
-```text
-https://bbfepbuoydwwsisaiiny.supabase.co/functions/v1/social-tiktok-auth-callback
-```
+V1 is manual because TikTok API access requires a developer app. The dashboard prepares the carousel kit: slide links, caption copy, and status tracking. API publishing can be restored later if TikTok access becomes available.

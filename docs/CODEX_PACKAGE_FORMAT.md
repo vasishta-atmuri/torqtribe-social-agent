@@ -38,4 +38,4 @@ Validation rules:
 - `media` must contain 2-35 local images.
 - Images must be `.png`, `.jpg`, `.jpeg`, or `.webp`.
 - `title` and `caption` are required.
-
+- `status` should usually be `needs_review`. The dashboard moves it to `ready_to_post`, `scheduled_manually`, or `published_manually`.
