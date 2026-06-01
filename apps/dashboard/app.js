@@ -1,5 +1,4 @@
 const config = window.SOCIAL_AGENT_CONFIG || {};
-const supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
 const authPanel = document.querySelector("#authPanel");
 const appPanel = document.querySelector("#appPanel");
 const loginForm = document.querySelector("#loginForm");
@@ -10,24 +9,41 @@ const appStatus = document.querySelector("#appStatus");
 const sessionInfo = document.querySelector("#sessionInfo");
 const refreshButton = document.querySelector("#refresh");
 const signOutButton = document.querySelector("#signOut");
+let supabase;
 
-loginForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (getPassword()) await signInWithPassword();
-  else await sendMagicLink();
-});
+boot();
 
-magicLinkButton.addEventListener("click", sendMagicLink);
-passwordSignInButton.addEventListener("click", signInWithPassword);
-refreshButton.addEventListener("click", load);
-signOutButton.addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  setAuthStatus("Signed out.", "success");
+async function boot() {
+  if (!window.supabase?.createClient) {
+    setAuthStatus("Supabase login script did not load. Refresh the page or disable blockers for this site.", "error");
+    return;
+  }
+  if (!config.supabaseUrl || !config.supabaseAnonKey) {
+    setAuthStatus("Dashboard config is missing. Check GitHub Pages config.js.", "error");
+    return;
+  }
+
+  supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+  setAuthStatus("Dashboard script loaded. Ready to sign in.", "success");
+
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (getPassword()) await signInWithPassword();
+    else await sendMagicLink();
+  });
+
+  magicLinkButton.addEventListener("click", sendMagicLink);
+  passwordSignInButton.addEventListener("click", signInWithPassword);
+  refreshButton.addEventListener("click", load);
+  signOutButton.addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    setAuthStatus("Signed out.", "success");
+    await load();
+  });
+
+  supabase.auth.onAuthStateChange(() => load());
   await load();
-});
-
-supabase.auth.onAuthStateChange(() => load());
-load();
+}
 
 async function sendMagicLink() {
   const email = getEmail();
