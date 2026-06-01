@@ -4,10 +4,23 @@ const authPanel = document.querySelector("#authPanel");
 const appPanel = document.querySelector("#appPanel");
 const loginForm = document.querySelector("#loginForm");
 const refreshButton = document.querySelector("#refresh");
+const signOutButton = document.querySelector("#signOut");
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const email = document.querySelector("#email").value;
+  const password = document.querySelector("#password").value;
+  const action = event.submitter?.dataset?.action || "magic";
+  if (action === "password") {
+    if (!password) {
+      alert("Enter a password, or use Send Magic Link instead.");
+      return;
+    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    await load();
+    return;
+  }
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: window.location.href.split("?")[0] }
@@ -16,6 +29,10 @@ loginForm.addEventListener("submit", async (event) => {
 });
 
 refreshButton.addEventListener("click", load);
+signOutButton.addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  await load();
+});
 
 supabase.auth.onAuthStateChange(() => load());
 load();

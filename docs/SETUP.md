@@ -22,7 +22,16 @@ Repository variables:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 
-## 3. Manual TikTok publishing
+## 3. Sign in to the dashboard
+
+The dashboard supports two Supabase Auth methods:
+
+- Magic link: easiest when Supabase email delivery works.
+- Password login: recommended fallback if magic links do not arrive.
+
+To use password login, open Supabase Dashboard > Authentication > Users, create or select your admin user, and set a password. Then sign in on the dashboard with that email and password.
+
+## 4. Manual TikTok publishing
 
 TikTok API publishing is disabled in V1 because it requires a TikTok developer app. Use the dashboard to approve a kit, copy the caption, open/download slides, and mark the post as scheduled or published after uploading it in TikTok.
 

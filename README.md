@@ -51,6 +51,8 @@ npm run serve:dashboard
 
 Then open `http://127.0.0.1:4177`.
 
+The dashboard supports both Supabase magic-link login and password login. If emails do not arrive, create or update your admin user password in Supabase Auth, then use "Sign In With Password."
+
 ## TikTok
 
 V1 is manual because TikTok API access requires a developer app. The dashboard prepares the carousel kit: slide links, caption copy, and status tracking. API publishing can be restored later if TikTok access becomes available.

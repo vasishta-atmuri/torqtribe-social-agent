@@ -17,10 +17,12 @@
   <main>
     <section id="authPanel" class="panel">
       <h2>Sign In</h2>
-      <p>Use the email tied to your social Supabase project.</p>
+      <p>Use the email tied to your Supabase account. If magic links do not arrive, sign in with a password.</p>
       <form id="loginForm">
         <input id="email" type="email" placeholder="you@example.com" required>
-        <button type="submit">Send Magic Link</button>
+        <input id="password" type="password" placeholder="Password, optional for magic link">
+        <button type="submit" data-action="magic">Send Magic Link</button>
+        <button type="submit" data-action="password">Sign In With Password</button>
       </form>
     </section>
 
@@ -30,7 +32,10 @@
           <h2>Posts</h2>
           <p>Approve a kit, copy the caption, download/open the slides, then mark the post when you upload it manually.</p>
         </div>
-        <button id="refresh">Refresh</button>
+        <div class="toolbar-actions">
+          <button id="refresh">Refresh</button>
+          <button id="signOut" class="ghost">Sign Out</button>
+        </div>
       </div>
       <div class="columns">
         <div class="panel"><h3>Needs Review</h3><div id="needsReview"></div></div>
