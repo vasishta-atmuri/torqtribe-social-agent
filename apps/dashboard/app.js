@@ -42,7 +42,11 @@ async function boot() {
     await load();
   });
 
-  supabaseClient.auth.onAuthStateChange(() => load());
+  supabaseClient.auth.onAuthStateChange(() => {
+    setTimeout(() => {
+      void load();
+    }, 0);
+  });
   await load();
 }
 
@@ -54,16 +58,25 @@ async function sendMagicLink() {
   }
   setAuthBusy(true);
   setAuthStatus("Sending magic link...", "");
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.href.split("?")[0] }
-  });
-  setAuthBusy(false);
-  if (error) {
-    setAuthStatus(error.message, "error");
-    return;
+  try {
+    const { error } = await withTimeout(
+      supabaseClient.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.href.split("?")[0] }
+      }),
+      15000,
+      "Magic link request timed out. Check your connection and try again."
+    );
+    if (error) {
+      setAuthStatus(error.message, "error");
+      return;
+    }
+    setAuthStatus("Magic link sent. Open it from the same device/browser, then return here.", "success");
+  } catch (error) {
+    setAuthStatus(errorMessage(error), "error");
+  } finally {
+    setAuthBusy(false);
   }
-  setAuthStatus("Magic link sent. Open it from the same device/browser, then return here.", "success");
 }
 
 async function signInWithPassword() {
@@ -79,18 +92,36 @@ async function signInWithPassword() {
   }
   setAuthBusy(true);
   setAuthStatus("Signing in...", "");
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  setAuthBusy(false);
-  if (error) {
-    setAuthStatus(error.message, "error");
-    return;
+  try {
+    const { data, error } = await withTimeout(
+      supabaseClient.auth.signInWithPassword({ email, password }),
+      15000,
+      "Sign-in timed out. Supabase may have signed you in, so refresh once before trying again."
+    );
+    if (error) {
+      setAuthStatus(error.message, "error");
+      return;
+    }
+    setAuthStatus(`Signed in as ${data.user.email}. Loading posts...`, "success");
+    await load();
+  } catch (error) {
+    setAuthStatus(errorMessage(error), "error");
+  } finally {
+    setAuthBusy(false);
   }
-  setAuthStatus(`Signed in as ${data.user.email}. Loading posts...`, "success");
-  await load();
 }
 
 async function load() {
-  const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+  const sessionResult = await withTimeout(
+    supabaseClient.auth.getSession(),
+    15000,
+    "Session check timed out. Refresh the page and try again."
+  ).catch((error) => {
+    setAuthStatus(errorMessage(error), "error");
+    return null;
+  });
+  if (!sessionResult) return;
+  const { data: { session }, error: sessionError } = sessionResult;
   if (sessionError) {
     setAuthStatus(sessionError.message, "error");
     return;
@@ -101,10 +132,19 @@ async function load() {
   setAppStatus("", "");
   if (!session) return;
 
-  const { data: posts, error } = await supabaseClient
-    .from("social_posts")
-    .select("*, social_media_assets(*)")
-    .order("created_at", { ascending: false });
+  const postResult = await withTimeout(
+    supabaseClient
+      .from("social_posts")
+      .select("*, social_media_assets(*)")
+      .order("created_at", { ascending: false }),
+    15000,
+    "Post loading timed out. Refresh the dashboard and try again."
+  ).catch((error) => {
+    setAppStatus(errorMessage(error), "error");
+    return null;
+  });
+  if (!postResult) return;
+  const { data: posts, error } = postResult;
   if (error) {
     setAppStatus(`Could not load posts: ${error.message}`, "error");
     return;
@@ -250,5 +290,17 @@ function setStatusText(element, message, type) {
   element.textContent = message;
   element.classList.remove("error", "success");
   if (type) element.classList.add(type);
+}
+
+function withTimeout(promise, milliseconds, message) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), milliseconds);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
 }
 })();
