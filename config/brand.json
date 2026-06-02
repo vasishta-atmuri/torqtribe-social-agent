@@ -1,8 +1,9 @@
 {
   "brandName": "Torq Tribe",
+  "appName": "Torq Tribe: Gamified Fitness",
   "primaryLine": "Be consistent. Be fit.",
   "blogUrl": "https://torq-tribe.github.io/blog.html",
-  "appStoreUrl": "",
+  "appStoreUrl": "https://apps.apple.com/us/app/torq-tribe-gamified-fitness/id6757682701",
   "colors": {
     "ember": "#e9a23b",
     "stone": "#17120e",
@@ -10,4 +11,3 @@
     "leaf": "#2f6f4e"
   }
 }
-

@@ -14,6 +14,13 @@ Codex creates the creative package. This project imports it, syncs it to Supabas
 6. Post the photo carousel manually in TikTok.
 7. Mark the post as scheduled or published in the dashboard.
 
+`npm run sync` also prepares the slides for phone posting:
+
+- copies each package to iCloud Drive as a backup,
+- imports valid, non-rejected packages into macOS Photos as `TorqTribe TikTok - <package-slug>`.
+
+If iCloud Photos is enabled on the Mac and iPhone, those slides sync into the iPhone Photos app so TikTok can access them.
+
 ## Local Setup
 
 ```bash
@@ -29,9 +36,11 @@ Required local `.env.local` values:
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 SOCIAL_OWNER_USER_ID=
+ICLOUD_EXPORT_DIR=
 ```
 
 The service role key stays only on your Mac. It is used by the local worker to upload media and create rows.
+`ICLOUD_EXPORT_DIR` is optional. If empty, the worker uses `iCloud Drive/Photos/TorqTribe TikTok Carousels`.
 
 For the pilot, this project uses the existing TorqTribe Supabase project with isolated `social_*` tables and Edge Functions. A separate Supabase project can be restored later if the workflow gets traction.
 

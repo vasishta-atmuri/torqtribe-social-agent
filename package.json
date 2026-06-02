@@ -8,6 +8,8 @@
     "worker": "node --experimental-strip-types apps/worker/src/cli.ts",
     "scan": "node --experimental-strip-types apps/worker/src/cli.ts scan",
     "sync": "node --experimental-strip-types apps/worker/src/cli.ts sync",
+    "export:icloud": "node --experimental-strip-types apps/worker/src/cli.ts export-icloud",
+    "import:photos": "node --experimental-strip-types apps/worker/src/cli.ts import-photos",
     "check": "node --experimental-strip-types --check apps/worker/src/cli.ts",
     "serve:dashboard": "python3 -m http.server 4177 -d apps/dashboard"
   },

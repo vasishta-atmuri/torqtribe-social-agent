@@ -1,13 +1,16 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { basename, extname, join, resolve } from "node:path";
 
-type Command = "init" | "scan" | "sync" | "help";
+type Command = "init" | "scan" | "sync" | "export-icloud" | "import-photos" | "help";
 
 interface Env {
   SUPABASE_URL?: string;
   SUPABASE_ANON_KEY?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SOCIAL_OWNER_USER_ID?: string;
+  ICLOUD_EXPORT_DIR?: string;
 }
 
 interface PostPackage {
@@ -51,6 +54,12 @@ try {
     case "sync":
       await syncPackages();
       break;
+    case "export-icloud":
+      exportPackagesToIcloud();
+      break;
+    case "import-photos":
+      importPackagesToPhotos();
+      break;
     default:
       printHelp();
   }
@@ -83,6 +92,8 @@ Commands:
   init
   scan
   sync
+  export-icloud
+  import-photos
 `);
 }
 
@@ -194,13 +205,114 @@ async function syncPackages(): Promise<void> {
         size_bytes: statSync(mediaPath).size
       });
     }
+    const iCloudExportDir = exportPackageToIcloud(scan, env);
+    const photosAlbum = shouldImportToPhotos(scan) ? importPackageToPhotos(scan) : null;
     writeFileSync(resolve(scan.dir, "sync-result.json"), JSON.stringify({
       syncedAt: new Date().toISOString(),
       postId: syncedPost.id,
-      mediaCount: scan.mediaPaths.length
+      mediaCount: scan.mediaPaths.length,
+      iCloudExportDir,
+      photosAlbum
     }, null, 2));
     console.log(`Synced ${scan.slug}: ${syncedPost.id}`);
+    console.log(`iCloud export: ${iCloudExportDir}`);
+    if (photosAlbum) console.log(`Photos album: ${photosAlbum}`);
   }
+}
+
+function exportPackagesToIcloud(): void {
+  const env = loadEnv();
+  const scans = scanPackages();
+  const valid = scans.filter((scan) => scan.ok && scan.post);
+  if (!valid.length) {
+    console.log("No valid packages to export.");
+    console.log(JSON.stringify(scans, null, 2));
+    return;
+  }
+  for (const scan of valid) {
+    const iCloudExportDir = exportPackageToIcloud(scan, env);
+    console.log(`Exported ${scan.slug}: ${iCloudExportDir}`);
+  }
+}
+
+function exportPackageToIcloud(scan: PackageScan, env: Env): string {
+  if (!scan.post) throw new Error(`Cannot export invalid package: ${scan.slug}`);
+  const exportDir = resolve(iCloudRoot(env), scan.slug);
+  ensureDir(exportDir);
+  for (let index = 0; index < scan.mediaPaths.length; index += 1) {
+    copyFileSync(scan.mediaPaths[index], resolve(exportDir, `slide-${String(index + 1).padStart(2, "0")}${extname(scan.mediaPaths[index])}`));
+  }
+  writeFileSync(resolve(exportDir, "caption.txt"), withHashtags(scan.post.caption, scan.post.hashtags || []));
+  writeFileSync(resolve(exportDir, "post.json"), JSON.stringify(scan.post, null, 2));
+  writeFileSync(resolve(scan.dir, "icloud-export.json"), JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    exportDir,
+    mediaCount: scan.mediaPaths.length
+  }, null, 2));
+  return exportDir;
+}
+
+function iCloudRoot(env: Env): string {
+  if (env.ICLOUD_EXPORT_DIR) return env.ICLOUD_EXPORT_DIR;
+  return join(homedir(), "Library", "Mobile Documents", "com~apple~CloudDocs", "Photos", "TorqTribe TikTok Carousels");
+}
+
+function importPackagesToPhotos(): void {
+  const scans = scanPackages();
+  const valid = scans.filter((scan) => scan.ok && scan.post && shouldImportToPhotos(scan));
+  if (!valid.length) {
+    console.log("No valid, non-rejected packages to import to Photos.");
+    console.log(JSON.stringify(scans, null, 2));
+    return;
+  }
+  for (const scan of valid) {
+    const album = importPackageToPhotos(scan);
+    console.log(`Imported ${scan.slug} to Photos album: ${album}`);
+  }
+}
+
+function shouldImportToPhotos(scan: PackageScan): boolean {
+  return scan.post?.status !== "rejected";
+}
+
+function importPackageToPhotos(scan: PackageScan): string {
+  if (!scan.post) throw new Error(`Cannot import invalid package: ${scan.slug}`);
+  const markerPath = resolve(scan.dir, "photos-import.json");
+  if (existsSync(markerPath)) {
+    const marker = JSON.parse(readFileSync(markerPath, "utf8")) as { albumName?: string };
+    return marker.albumName || photosAlbumName(scan.slug);
+  }
+
+  const albumName = photosAlbumName(scan.slug);
+  const script = `
+on run argv
+  set albumName to item 1 of argv
+  set imageFiles to {}
+  repeat with i from 2 to count of argv
+    set end of imageFiles to POSIX file (item i of argv)
+  end repeat
+  tell application "Photos"
+    activate
+    if exists album albumName then
+      set targetAlbum to album albumName
+    else
+      set targetAlbum to make new album named albumName
+    end if
+    import imageFiles into targetAlbum skip check duplicates true
+  end tell
+end run
+`;
+  execFileSync("osascript", ["-e", script, albumName, ...scan.mediaPaths], { stdio: "pipe" });
+  writeFileSync(markerPath, JSON.stringify({
+    importedAt: new Date().toISOString(),
+    albumName,
+    mediaCount: scan.mediaPaths.length
+  }, null, 2));
+  return albumName;
+}
+
+function photosAlbumName(slug: string): string {
+  return `TorqTribe TikTok - ${slug}`;
 }
 
 function withHashtags(caption: string, hashtags: string[]): string {
@@ -265,4 +377,3 @@ function supabaseClient(env: Required<Pick<Env, "SUPABASE_URL" | "SUPABASE_SERVI
     }
   };
 }
-
